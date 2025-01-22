@@ -9,13 +9,20 @@ import {
   EASContractAddress,
   getAddressForENS,
   getAttestation,
+  submitSignedAttestation,
 } from "./utils/utils";
-import { EAS, SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
+import {
+  EAS,
+  SchemaEncoder,
+  SchemaRegistry,
+  AttestationShareablePackageObject,
+} from "@ethereum-attestation-service/eas-sdk";
 import invariant from "tiny-invariant";
 import { ethers } from "ethers";
 import { Link, useSearchParams } from "react-router-dom";
 import { useNavigate } from "react-router";
 import axios from "axios";
+import dayjs from "dayjs";
 import { useSigner } from "./utils/wagmi-utils";
 
 const Title = styled.div`
@@ -33,7 +40,7 @@ const Container = styled.div`
 const MetButton = styled.div`
   border-radius: 10px;
   border: 1px solid #cfb9ff;
-  background: #333342;
+  background: #4caf50;
   width: 100%;
   padding: 20px 10px;
   box-sizing: border-box;
@@ -99,9 +106,19 @@ const WhiteBox = styled.div`
 const eas = new EAS(EASContractAddress);
 
 function Home() {
-  const { status } = useAccount();
+  const { status, address: myAddress } = useAccount();
   const modal = useModal();
+
+  const [title, setTitle] = useState("");
+  const [score, setScore] = useState("");
+  const [percentage, setPercentage] = useState("");
+  const [question, setTotalQuestionNo] = useState("");
+  const [answer, setTotalAnswer] = useState("");
+  const [issuer, setIssuerName] = useState("");
+  const [duration, setDuration] = useState("");
+  const [outcome, setOutcome] = useState("");
   const [address, setAddress] = useState("");
+
   const signer = useSigner();
   const [attesting, setAttesting] = useState(false);
   const [ensResolvedAddress, setEnsResolvedAddress] = useState("Dakh.eth");
@@ -112,6 +129,63 @@ function Home() {
     const addressParam = searchParams.get("address");
     if (addressParam) {
       setAddress(addressParam);
+    }
+  }, []);
+
+  useEffect(() => {
+    async function checkENS() {
+      if (address.includes(".eth")) {
+        const tmpAddress = await getAddressForENS(address);
+
+        if (tmpAddress) {
+          setEnsResolvedAddress(tmpAddress);
+        } else {
+          setEnsResolvedAddress("");
+        }
+      } else {
+        setEnsResolvedAddress("");
+      }
+    }
+    checkENS();
+  }, [address]);
+
+  // ---------------------------------------------
+
+  useEffect(() => {
+    const PercentageParam = searchParams.get("percentage");
+    if (PercentageParam) {
+      setPercentage(PercentageParam);
+    }
+  }, []);
+  useEffect(() => {
+    const TotalQuestionNoParam = searchParams.get("question");
+    if (TotalQuestionNoParam) {
+      setTotalQuestionNo(TotalQuestionNoParam);
+    }
+  }, []);
+  useEffect(() => {
+    const TotalAnswerParam = searchParams.get("question");
+    if (TotalAnswerParam) {
+      setTotalAnswer(TotalAnswerParam);
+    }
+  }, []);
+  useEffect(() => {
+    const IssuerNameParam = searchParams.get("issuer");
+    if (IssuerNameParam) {
+      setIssuerName(IssuerNameParam);
+    }
+  }, []);
+  useEffect(() => {
+    const DurationParam = searchParams.get("duration");
+    if (DurationParam) {
+      setDuration(DurationParam);
+    }
+  }, []);
+
+  useEffect(() => {
+    const OutcomeParam = searchParams.get("duration");
+    if (OutcomeParam) {
+      setOutcome(OutcomeParam);
     }
   }, []);
 
@@ -131,13 +205,13 @@ function Home() {
 
     checkENS();
   }, [address]);
-
   return (
     <Container>
       <GradientBar />
       <WhiteBox>
         <Title>
-          I <b>attest</b> that I met
+          I <b>attest</b> that I have successfully completed the assesment with
+          the following details
         </Title>
 
         <InputContainer>
@@ -151,6 +225,97 @@ function Home() {
           />
           {ensResolvedAddress && <EnsLogo src={"/ens-logo.png"} />}
         </InputContainer>
+        <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"Course Title"}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </InputContainer>
+        <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"Score"}
+            value={score}
+            onChange={(e) => setScore(e.target.value)}
+          />
+        </InputContainer>
+        <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"Percentage"}
+            value={percentage}
+            onChange={(e) => setPercentage(e.target.value)}
+          />
+        </InputContainer>
+        <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"No of Total Questions"}
+            value={question}
+            onChange={(e) => setTotalQuestionNo(e.target.value)}
+          />
+        </InputContainer>
+        <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"No of Correct Answers"}
+            value={answer}
+            onChange={(e) => setTotalAnswer(e.target.value)}
+          />
+        </InputContainer>
+        <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"Issuer Name"}
+            value={issuer}
+            onChange={(e) => setIssuerName(e.target.value)}
+          />
+        </InputContainer>
+        <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"Duration"}
+            value={duration}
+            onChange={(e) => setDuration(e.target.value)}
+          />
+        </InputContainer>
+        <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"Outcome(pass/fail)"}
+            value={outcome}
+            onChange={(e) => setOutcome(e.target.value)}
+          />
+        </InputContainer>
+        {/* ------------------------------------------------------ */}
+        {/* <InputContainer>
+          <InputBlock
+            autoCorrect={"off"}
+            autoComplete={"off"}
+            autoCapitalize={"off"}
+            placeholder={"Issuer Name"}
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+          />
+        </InputContainer> */}
         <MetButton
           onClick={async () => {
             if (status !== "connected") {
@@ -158,41 +323,72 @@ function Home() {
             } else {
               setAttesting(true);
               try {
-                const schemaEncoder = new SchemaEncoder("bool metIRL");
+                const schemaEncoder = new SchemaEncoder(
+                  "string Course_Title,uint256 Score,string Percentage,uint256 No_of_Questions,uint256 No_of_Correct_Answers,string Issuer_Name,string Duration,string Outcome"
+                );
                 const encoded = schemaEncoder.encodeData([
-                  { name: "metIRL", type: "bool", value: true },
+                  // { name: "metIRL", type: "bool", value: true },
+                  { name: "Course_Title", value: title, type: "string" },
+                  { name: "Score", value: score, type: "uint256" },
+                  { name: "Percentage", value: percentage, type: "string" },
+                  { name: "No_of_Questions", value: question, type: "uint256" },
+                  {
+                    name: "No_of_Correct_Answers",
+                    value: answer,
+                    type: "uint256",
+                  },
+                  { name: "Issuer_Name", value: issuer, type: "string" },
+                  { name: "Duration", value: duration, type: "string" },
+                  { name: "Outcome", value: outcome, type: "string" },
                 ]);
 
                 invariant(signer, "signer must be defined");
                 eas.connect(signer);
 
+                // const eas = new EAS(EASContractAddress)
+
+                const offchain = await eas.getOffchain();
                 const recipient = ensResolvedAddress
                   ? ensResolvedAddress
                   : address;
 
+                // ---------------ONCHAIN ATTESTATION---------------
+                console.log("about to attest");
                 const tx = await eas.attest({
                   data: {
-                    recipient: recipient,
+                    recipient: address,
                     data: encoded,
-                    refUID: ethers.ZeroHash,
+                    // refUID: ethers.ZeroHash,
                     revocable: true,
                     expirationTime: BigInt(0),
                   },
-                  schema: CUSTOM_SCHEMAS.MET_IRL_SCHEMA,
+                  schema:
+                    "0x4115978e1c57c94083a43ade8224d82453a72d50aa06cfb817bb17d0c155367c",
                 });
-
+                console.log("attested");
                 const uid = await tx.wait();
 
                 const attestation = await getAttestation(uid);
-
+                console.log(uid);
+                console.log("attested maybe");
                 // Update ENS names
                 await Promise.all([
                   axios.get(`${baseURL}/api/getENS/${address}`),
                   axios.get(`${baseURL}/api/getENS/${recipient}`),
                 ]);
-
-                navigate(`/connections`);
-              } catch (e) {}
+                console.log(address);
+                console.log(uid);
+                console.log(attestation);
+                if (uid) {
+                  window.open(
+                    `https://sepolia.easscan.org/attestation/view/${attestation?.id}`
+                  );
+                }
+              } catch (e) {
+                console.log(e);
+              }
+              console.log(address);
+              console.log(answer);
 
               setAttesting(false);
             }
@@ -204,11 +400,10 @@ function Home() {
             ? "Make attestation"
             : "Connect wallet"}
         </MetButton>
-
         {status === "connected" && (
           <>
             <SubText to={"/qr"}>Show my QR code</SubText>
-            <SubText to={"/connections"}>Connections</SubText>
+            {/* <SubText to={"/connections"}>Connections</SubText> */}
           </>
         )}
       </WhiteBox>

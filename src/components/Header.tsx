@@ -136,13 +136,13 @@ export function Header() {
     },
   ];
 
-  if (address) {
-    menuItems.push({
-      title: "Connections",
-      onClick: () => navigate("/connections"),
-      path: "/connections",
-    });
-  }
+  // if (address) {
+  //   menuItems.push({
+  //     title: "Connections",
+  //     onClick: () => navigate("/connections"),
+  //     path: "/connections",
+  //   });
+  // }
 
   invariant(activeChainConfig, "activeChainConfig is not set");
 
@@ -154,7 +154,7 @@ export function Header() {
             <LogoContainer>
               <Logo onClick={() => navigate("/")}>
                 <LogoImage src="/logo.png" />
-                <LogoText>METIRL</LogoText>
+                <LogoText>CrediFi</LogoText>
               </Logo>
             </LogoContainer>
             <Left>

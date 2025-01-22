@@ -1,10 +1,13 @@
 import invariant from "tiny-invariant";
+import { AttestationShareablePackageObject } from "@ethereum-attestation-service/eas-sdk";
 import type {
   Attestation,
   AttestationResult,
   EASChainConfig,
   EnsNamesResult,
   MyAttestationResult,
+  StoreAttestationRequest,
+  StoreIPFSActionReturn,
 } from "./types";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
@@ -16,7 +19,7 @@ export const alchemyApiKey = process.env.REACT_APP_ALCHEMY_API_KEY;
 
 export const CUSTOM_SCHEMAS = {
   MET_IRL_SCHEMA:
-    "0xc59265615401143689cbfe73046a922c975c99d97e4c248070435b1104b2dea7",
+    "0x55fa259802f3fa29756c0aeb9216688225ca74f017a84decbfc77517560226cd",
   CONFIRM_SCHEMA:
     "0xb96446c85ce538c1641a967f23ea11bbb4a390ef745fc5a9905689dbd48bac86",
 };
@@ -67,6 +70,21 @@ export async function getAddressForENS(name: string) {
 
   return await provider.resolveName(name);
 }
+
+export async function submitSignedAttestation(
+  pkg: AttestationShareablePackageObject
+) {
+  const data: StoreAttestationRequest = {
+    filename: `eas.txt`,
+    textJson: JSON.stringify(pkg),
+  };
+
+  return await axios.post<StoreIPFSActionReturn>(
+    `${baseURL}/offchain/store`,
+    data
+  );
+}
+
 export async function getENSName(address: string) {
   const provider = new ethers.JsonRpcProvider(
     `https://eth-mainnet.g.alchemy.com/v2/${process.env.REACT_APP_ALCHEMY_API_KEY}`,
