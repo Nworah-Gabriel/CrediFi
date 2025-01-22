@@ -1,4 +1,4 @@
-# Attest to real-life meetings with CrediFi
+# Attest to sucessful Assessment completion with CrediFi
 
 
 Check out [CrediFi](https://credi-fi.vercel.app/) to play the live version.
